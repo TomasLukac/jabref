@@ -49,6 +49,19 @@ public class TextBasedPreviewLayout implements PreviewLayout {
         }
     }
 
+    @Override
+    public String generatePreview(BibEntry entry, BibDatabase database, String regex) {
+        if (regex == null || regex.equals("")) {
+            return generatePreview(entry, database);
+        }
+        if (layout != null) {
+            return layout.doLayout(entry, database, regex);
+        } else {
+            return "";
+        }
+    }
+
+
     public String getText() {
         return text;
     }

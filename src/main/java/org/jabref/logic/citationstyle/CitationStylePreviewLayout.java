@@ -16,6 +16,11 @@ public class CitationStylePreviewLayout implements PreviewLayout {
     }
 
     @Override
+    public String generatePreview(BibEntry entry, BibDatabase database, String regex) {
+        return generatePreview(entry, database);
+    }
+
+    @Override
     public String getName() {
         return citationStyle.getTitle();
     }

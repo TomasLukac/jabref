@@ -98,7 +98,7 @@ public class PreviewViewer extends ScrollPane implements InvalidationListener {
         if (searchHighlightPattern.isPresent()) {
             String pattern = searchHighlightPattern.get().pattern().replace("\\Q", "").replace("\\E", "");
 
-            previewView.getEngine().executeScript("highlight('" + pattern + "');");
+            update(pattern);
         }
     }
 
@@ -126,7 +126,11 @@ public class PreviewViewer extends ScrollPane implements InvalidationListener {
     }
 
     private void update() {
-        if (!entry.isPresent() || layout == null) {
+        update(null);
+    }
+
+    private void update(String regex) {
+        if (entry.isEmpty() || layout == null) {
             // Nothing to do
             return;
         }
@@ -134,7 +138,7 @@ public class PreviewViewer extends ScrollPane implements InvalidationListener {
         ExporterFactory.entryNumber = 1; // Set entry number in case that is included in the preview layout.
 
         BackgroundTask
-                      .wrap(() -> layout.generatePreview(entry.get(), database.getDatabase()))
+                      .wrap(() -> layout.generatePreview(entry.get(), database.getDatabase(), regex))
                       .onRunning(() -> setPreviewText("<i>" + Localization.lang("Processing %0", Localization.lang("Citation Style")) + ": " + layout.getName() + " ..." + "</i>"))
                       .onSuccess(this::setPreviewText)
                       .onFailure(exception -> {
@@ -145,9 +149,7 @@ public class PreviewViewer extends ScrollPane implements InvalidationListener {
     }
 
     private void setPreviewText(String text) {
-        String myText = JS_HIGHLIGHT_FUNCTION + "<div id=\"content\"" + text + "</div>";
-        previewView.getEngine().setJavaScriptEnabled(true);
-        previewView.getEngine().loadContent(myText);
+        previewView.getEngine().loadContent(text);
 
         this.setHvalue(0);
     }

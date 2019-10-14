@@ -7,5 +7,7 @@ public interface PreviewLayout {
 
     String generatePreview(BibEntry entry, BibDatabase database);
 
+    String generatePreview(BibEntry entry, BibDatabase database, String regex);
+
     String getName();
 }

@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import org.jabref.logic.formatter.bibtexfields.HtmlToLatexFormatter;
 import org.jabref.logic.formatter.bibtexfields.UnicodeToLatexFormatter;
@@ -200,7 +201,7 @@ class LayoutEntry {
                 return value;
             case LayoutHelper.IS_FIELD_START:
             case LayoutHelper.IS_GROUP_START:
-                return handleFieldOrGroupStart(bibtex, database);
+                return handleFieldOrGroupStart(bibtex, database, null);
             case LayoutHelper.IS_FIELD_END:
             case LayoutHelper.IS_GROUP_END:
                 return "";
@@ -214,6 +215,61 @@ class LayoutEntry {
             default:
                 return "";
         }
+    }
+
+    public String doLayout(BibEntry bibtex, BibDatabase database, String regex) {
+        switch (type) {
+            case LayoutHelper.IS_LAYOUT_TEXT:
+                return text;
+            case LayoutHelper.IS_SIMPLE_COMMAND: {
+                String value = bibtex.getResolvedFieldOrAlias(FieldFactory.parseField(text), database).orElse("");
+
+                // If a post formatter has been set, call it:
+                if (postFormatter != null) {
+                    value = postFormatter.format(value);
+                }
+
+                if (regex != null) {
+                    value = highlightSearchByRegex(value, regex);
+                }
+                return value;
+            }
+            case LayoutHelper.IS_FIELD_START:
+            case LayoutHelper.IS_GROUP_START: {
+                String value = handleFieldOrGroupStart(bibtex, database, regex);
+                if (regex != null) {
+                    value = highlightSearchByRegex(value, regex);
+                }
+                return value;
+            }
+            case LayoutHelper.IS_FIELD_END:
+            case LayoutHelper.IS_GROUP_END:
+                return "";
+            case LayoutHelper.IS_OPTION_FIELD: {
+                String value = handleOptionField(bibtex, database);
+                if (regex != null) {
+                    value = highlightSearchByRegex(value, regex);
+                }
+                return value;
+            }
+            case LayoutHelper.IS_ENCODING_NAME:
+                // Printing the encoding name is not supported in entry layouts, only
+                // in begin/end layouts. This prevents breakage if some users depend
+                // on a field called "encoding". We simply return this field instead:
+                return bibtex.getResolvedFieldOrAlias(new UnknownField("encoding"), database).orElse(null);
+            default:
+                return "";
+        }
+    }
+
+    private String highlightSearchByRegex(String value, String regex) {
+        if (value == null || value.matches(".*(<.+>).*") || regex == null || regex.isEmpty()) {
+            return value;
+        }
+
+        String words = regex.replaceAll("[()]", "").replaceAll("\\|", " ");
+
+        return value.replaceAll("(?i)" + Pattern.quote(words), "<span style='background-color:red'>$0</span>");
     }
 
     private String handleOptionField(BibEntry bibtex, BibDatabase database) {
@@ -249,7 +305,7 @@ class LayoutEntry {
         return fieldEntry;
     }
 
-    private String handleFieldOrGroupStart(BibEntry bibtex, BibDatabase database) {
+    private String handleFieldOrGroupStart(BibEntry bibtex, BibDatabase database, String regex) {
         Optional<String> field;
         boolean negated = false;
         if (type == LayoutHelper.IS_GROUP_START) {
@@ -290,11 +346,11 @@ class LayoutEntry {
             boolean previousSkipped = false;
 
             for (int i = 0; i < layoutEntries.size(); i++) {
-                fieldText = layoutEntries.get(i).doLayout(bibtex, database);
+                fieldText = layoutEntries.get(i).doLayout(bibtex, database, regex);
 
                 if (fieldText == null) {
                     if ((i + 1) < layoutEntries.size()) {
-                        if (layoutEntries.get(i + 1).doLayout(bibtex, database).trim().isEmpty()) {
+                        if (layoutEntries.get(i + 1).doLayout(bibtex, database, regex).trim().isEmpty()) {
                             i++;
                             previousSkipped = true;
                             continue;
@@ -676,5 +732,7 @@ class LayoutEntry {
         return result;
     }
 
-    public String getText() { return text; }
+    public String getText() {
+        return text;
+    }
 }

@@ -111,6 +111,28 @@ public class Layout {
         return builder.toString();
     }
 
+    public String doLayout(BibEntry bibtex, BibDatabase database, String regex) {
+        if (regex == null || regex.equals("")) {
+            return doLayout(bibtex, database);
+        }
+
+        StringBuilder builder = new StringBuilder(100);
+
+        for (LayoutEntry layoutEntry : layoutEntries) {
+            String fieldText = layoutEntry.doLayout(bibtex, database, regex);
+
+            // The following change means we treat null fields as "". This is to fix the
+            // problem of whitespace disappearing after missing fields.
+            if (fieldText == null) {
+                fieldText = "";
+            }
+
+            builder.append(fieldText);
+        }
+
+        return builder.toString();
+    }
+
     /**
      * Returns the processed text. If the database argument is
      * null, no string references will be resolved. Otherwise all valid
