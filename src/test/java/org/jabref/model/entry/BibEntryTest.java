@@ -5,17 +5,17 @@ import java.util.List;
 import java.util.Optional;
 
 import org.jabref.model.database.BibDatabase;
-import org.jabref.model.entry.field.BibField;
-import org.jabref.model.entry.field.FieldPriority;
-import org.jabref.model.entry.field.StandardField;
-import org.jabref.model.entry.field.UnknownField;
+import org.jabref.model.entry.field.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
+import static junit.framework.TestCase.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.mockito.Mockito.*;
 
 public class BibEntryTest {
 
@@ -137,5 +137,32 @@ public class BibEntryTest {
         KeywordList actual = entry.getResolvedKeywords(',', database);
 
         assertEquals(new KeywordList(new Keyword("kw"), new Keyword("kw2"), new Keyword("kw3")), actual);
+    }
+
+    @Test
+    public void getResolvedFieldOrAlias() {
+
+        //mock
+        BibDatabase bibDatabase = mock(BibDatabase.class);
+
+        Field field1 = SpecialField.PRINTED;
+        Field field2 = SpecialField.QUALITY;
+        Field field3 = SpecialField.RANKING;
+
+        OrFields orFields = new OrFields(Arrays.asList(field1, field2, field3));
+
+        ArgumentCaptor<Field> captor = ArgumentCaptor.forClass(Field.class);
+
+        BibEntry bibEntry = spy(BibEntry.class);
+
+        // test
+        Optional<String> resolvedFieldOrAlias = bibEntry.getResolvedFieldOrAlias(orFields, bibDatabase);
+
+        verify(bibEntry, times(3)).getResolvedFieldOrAlias(captor.capture(), any(BibDatabase.class));
+        List<Field> allValues = captor.getAllValues();
+        assertTrue(allValues.contains(field1));
+        assertTrue(allValues.contains(field2));
+        assertTrue(allValues.contains(field2));
+        assertTrue(resolvedFieldOrAlias.isEmpty());
     }
 }

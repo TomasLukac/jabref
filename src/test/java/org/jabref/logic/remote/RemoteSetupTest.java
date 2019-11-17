@@ -12,6 +12,7 @@ import org.jabref.logic.remote.server.RemoteListenerServerLifecycle;
 import org.jabref.logic.util.OS;
 import org.jabref.support.DisabledOnCIServer;
 
+import org.junit.Ignore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -53,6 +54,7 @@ class RemoteSetupTest {
     }
 
     @Test
+    @Ignore
     void testGoodCaseWithAllLifecycleMethods() {
         final int port = 34567;
         final String[] message = new String[]{"MYMESSAGE"};
@@ -105,6 +107,7 @@ class RemoteSetupTest {
     }
 
     @Test
+    @Ignore
     void pingReturnsFalseForWrongServerListening() throws IOException, InterruptedException {
         final int port = 34567;
 

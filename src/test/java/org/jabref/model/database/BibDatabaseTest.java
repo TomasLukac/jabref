@@ -12,6 +12,7 @@ import java.util.Set;
 
 import org.jabref.model.entry.BibEntry;
 import org.jabref.model.entry.BibtexString;
+import org.jabref.model.entry.event.EntryEventSource;
 import org.jabref.model.entry.field.StandardField;
 import org.jabref.model.entry.field.UnknownField;
 import org.jabref.model.entry.types.StandardEntryType;
@@ -25,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.*;
 
 public class BibDatabaseTest {
 
@@ -344,5 +346,59 @@ public class BibDatabaseTest {
     public void setPreambleWorks() {
         database.setPreamble("Oh yeah!");
         assertEquals(Optional.of("Oh yeah!"), database.getPreamble());
+    }
+
+    @Test
+    public void shouldInsertEntries() {
+
+        // init
+        BibEntry entry1 = spy(BibEntry.class);
+        BibEntry entry2 = spy(BibEntry.class);
+        List<BibEntry> entries = Arrays.asList(entry1, entry2);
+
+        when(entry1.getId()).thenReturn("mojTest1");
+        when(entry2.getId()).thenReturn("mojTest2");
+
+        // test
+        database.insertEntries(entries);
+
+        assertTrue(database.containsEntryWithId("mojTest1"));
+        assertTrue(database.containsEntryWithId("mojTest2"));
+        assertFalse(database.containsEntryWithId("mojTest3"));
+    }
+
+    @Test
+    public void shouldRemoveEntry() {
+
+        // init
+        BibEntry entry = spy(BibEntry.class);
+
+        when(entry.getId()).thenReturn("mojTest");
+
+        // test
+        database.insertEntry(entry);
+
+        assertTrue(database.containsEntryWithId("mojTest"));
+
+        database.removeEntry(entry);
+
+        assertFalse(database.containsEntryWithId("mojTest"));
+    }
+
+    @Test
+    public void insertEntryNotDuplicate() {
+
+        // init
+        BibEntry entry = spy(BibEntry.class);
+
+        DuplicationChecker duplicationChecker = mock(DuplicationChecker.class);
+
+        when(entry.getId()).thenReturn("mojTest");
+        when(duplicationChecker.isDuplicateCiteKeyExisting(entry)).thenReturn(false);
+
+        // test
+        boolean result = database.insertEntry(entry);
+
+        assertFalse(result);
     }
 }

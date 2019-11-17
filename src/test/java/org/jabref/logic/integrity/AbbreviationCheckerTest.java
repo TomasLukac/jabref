@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class AbbreviationCheckerTest {
 
@@ -31,5 +33,20 @@ class AbbreviationCheckerTest {
     void checkValueDoesNotComplainAboutJournalNameThatHasSameAbbreviation() {
         abbreviationRepository.addEntry(new Abbreviation("Journal", "Journal"));
         assertEquals(Optional.empty(), checker.checkValue("Journal"));
+    }
+
+    @Test
+    void checkValue() {
+
+        // mock
+        JournalAbbreviationRepository journalAbbreviationRepository = mock(JournalAbbreviationRepository.class);
+        AbbreviationChecker abbreviationChecker = new AbbreviationChecker(journalAbbreviationRepository);
+
+        when(journalAbbreviationRepository.isAbbreviatedName("J C")).thenReturn(true);
+
+        // test
+        Optional<String> result = abbreviationChecker.checkValue("J C");
+
+        assertEquals(result, Optional.of("abbreviation detected"));
     }
 }
